@@ -1,21 +1,163 @@
 @import "tailwindcss";
 
-/* Dark theme only — the sky is the theme. The body color matches the
-   canvas backdrop so there is no flash before the first paint. */
+/* ------------------------------------------------------------------ */
+/* Design tokens. Dark theme only — the sky is the theme.             */
+/* ------------------------------------------------------------------ */
+
 :root {
+  /* Surfaces */
   --background: #04050c;
   --foreground: #e6e9f5;
+  --muted: rgba(230, 233, 245, 0.72);
+  --faint: rgba(230, 233, 245, 0.55);
+
+  /* Brand accent — starlight lavender */
+  --accent: #a7abff;
+  --accent-strong: #c3c6ff;
+
+  /* Feedback */
+  --danger: #ffb3ab;
+  --success: #8ee7bd;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.09);
+  --glass-blur: 20px;
+  --glass-radius: 1.25rem;
+  --glass-shadow:
+    0 24px 60px -16px rgba(0, 0, 0, 0.6),
+    0 4px 16px -6px rgba(0, 0, 0, 0.4);
+
+  /* Inputs */
+  --input-bg: rgba(8, 10, 22, 0.55);
+  --input-border: rgba(255, 255, 255, 0.38);
+  --input-border-focus: rgba(167, 171, 255, 0.65);
+
+  /* Motion — always ease-out on UI, never ease-in */
+  --duration-press: 120ms;
+  --duration-ui: 200ms;
+  --duration-entrance: 280ms;
+}
+
+/* Emitted as a root variable AND an `ease-out-quint` utility. */
+@theme {
+  --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --font-sans: var(--font-sans-src), system-ui, sans-serif;
+  --font-display: var(--font-display-src), Georgia, serif;
+  --font-google: var(--font-roboto-src), Roboto, Arial, sans-serif;
+
+  /* Deliberate, small type scale (1.2 ratio, nudged to whole pixels). */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.4375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-3xl: 2.0625rem;
+  --text-3xl--line-height: 2.5rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(167, 171, 255, 0.35);
+}
+
+/* ------------------------------------------------------------------ */
+/* Glass card                                                          */
+/* ------------------------------------------------------------------ */
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  /* backdrop-filter is costly to rasterise; promoting the card to its own
+     layer avoids repainting the blur while children animate (and sidesteps
+     Safari's flicker when a filtered element changes stacking context). */
+  transform: translateZ(0);
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrance animation — decorative, never blocks interaction           */
+/* ------------------------------------------------------------------ */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+  }
+}
+
+.animate-card-in {
+  animation: card-in var(--duration-entrance) var(--ease-out-quint) backwards;
+}
+
+.animate-rise {
+  animation: rise-in var(--duration-entrance) var(--ease-out-quint) backwards;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-in,
+  .animate-rise {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Inputs                                                              */
+/* ------------------------------------------------------------------ */
+
+/* Chrome paints autofilled inputs pale yellow, destroying the glass look.
+   The inset box-shadow trick overrides it; the long transition keeps the
+   override alive while the field stays autofilled. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px #10121f inset;
+  caret-color: var(--foreground);
+  transition: background-color 600000s 0s;
 }
