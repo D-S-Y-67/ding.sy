@@ -1,12 +1,16 @@
+import { render } from "@react-email/render";
+import { createElement } from "react";
 import { Resend } from "resend";
+import { MagicLinkEmail } from "@/emails/magic-link-email";
 import { optionalEnv } from "../env";
 
 /**
- * Delivers the magic-link email. Without RESEND_API_KEY (local dev) the
- * link is printed to the server console instead of sending real email —
- * this is also how the E2E flow is tested without an inbox.
+ * Delivers the magic-link email via Resend, rendered from the themed
+ * react-email template (HTML + plain-text alternative).
  *
- * M4 replaces the plain HTML body with the themed react-email template.
+ * Without RESEND_API_KEY (local dev) the link is printed to the server
+ * console instead of sending real email — this is also how the E2E flow
+ * is tested without an inbox.
  */
 export async function sendMagicLinkEmail(params: {
   email: string;
@@ -21,6 +25,12 @@ export async function sendMagicLinkEmail(params: {
     return;
   }
 
+  const email = createElement(MagicLinkEmail, { url: params.url });
+  const [html, text] = await Promise.all([
+    render(email),
+    render(email, { plainText: true }),
+  ]);
+
   const resend = new Resend(apiKey);
   const from = optionalEnv("EMAIL_FROM") ?? "Regmaglypt <onboarding@resend.dev>";
 
@@ -28,7 +38,8 @@ export async function sendMagicLinkEmail(params: {
     from,
     to: params.email,
     subject: "Your sign-in link for Regmaglypt",
-    html: `<p>Sign in to Regmaglypt by opening this link: <a href="${params.url}">${params.url}</a></p><p>The link stays valid for 10 minutes and works once. If you didn't request it, ignore this email.</p>`,
+    html,
+    text,
   });
 
   if (error) {
