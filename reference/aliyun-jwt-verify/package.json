@@ -1,0 +1,12 @@
+{
+  "name": "aliyun-jwt-verify-reference",
+  "private": true,
+  "type": "module",
+  "description": "Reference: verify Regmaglypt JWTs against the app's JWKS endpoint.",
+  "scripts": {
+    "start": "node verify.mjs"
+  },
+  "dependencies": {
+    "jose": "^6.0.0"
+  }
+}
