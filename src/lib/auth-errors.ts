@@ -8,7 +8,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   EXPIRED_TOKEN: "That sign-in link has expired. Request a fresh one below.",
   INVALID_TOKEN:
     "That sign-in link is no longer valid — it may have been used already. Request a new one below.",
-  access_denied: "Google sign-in was cancelled. Choose a method below to continue.",
+  access_denied: "Sign-in was cancelled. Choose a method below to continue.",
 };
 
 const FALLBACK_MESSAGE =

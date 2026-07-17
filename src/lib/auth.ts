@@ -8,15 +8,16 @@ import { optionalEnv, requireEnvAtRuntime, resolveBaseUrl } from "./env";
 
 const baseURL = resolveBaseUrl();
 
-const googleClientId = optionalEnv("GOOGLE_CLIENT_ID");
-const googleClientSecret = optionalEnv("GOOGLE_CLIENT_SECRET");
+const microsoftClientId = optionalEnv("MICROSOFT_CLIENT_ID");
+const microsoftClientSecret = optionalEnv("MICROSOFT_CLIENT_SECRET");
 
 /**
  * Server-side auth configuration — the single place providers, tokens and
  * storage are wired together.
  *
- * Adding Apple later: add an `apple` entry to `socialProviders` (with its
- * env vars) and one entry to PROVIDERS in components/auth/ProviderButtons.
+ * Adding another provider later (Google, Apple, …): add its entry to
+ * `socialProviders` (with env vars) and one entry to PROVIDERS in
+ * components/auth/ProviderButtons. Nothing else changes.
  */
 export const auth = betterAuth({
   appName: "Regmaglypt",
@@ -25,11 +26,14 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema }),
 
   socialProviders:
-    googleClientId && googleClientSecret
+    microsoftClientId && microsoftClientSecret
       ? {
-          google: {
-            clientId: googleClientId,
-            clientSecret: googleClientSecret,
+          microsoft: {
+            clientId: microsoftClientId,
+            clientSecret: microsoftClientSecret,
+            // "common" = personal + work/school accounts; override with a
+            // tenant ID to restrict sign-in to one organisation.
+            tenantId: optionalEnv("MICROSOFT_TENANT_ID") ?? "common",
           },
         }
       : {},

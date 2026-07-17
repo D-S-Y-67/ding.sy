@@ -11,7 +11,7 @@ foundation the rest of the product will grow around.
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript strict, Tailwind CSS v4) — deployed on Vercel
-- **Better Auth** — Google OAuth + passwordless magic links, JWT/JWKS for the backend
+- **Better Auth** — Microsoft OAuth (Entra ID) + passwordless magic links, JWT/JWKS for the backend
 - **Postgres on Supabase** (`ap-southeast-1`, Singapore) via **Drizzle ORM**
 - **Resend + react-email** — themed magic-link delivery
 - Animated background: vanilla Canvas 2D, no rendering libraries
@@ -27,8 +27,8 @@ npm run dev
 
 Without `RESEND_API_KEY`, magic links are printed to the dev-server console instead of
 being emailed — request a link on the login page, copy it from the terminal, and open
-it. Without Google credentials the Google button renders but reports an error when
-clicked. Service-by-service setup lives in [SETUP.md](./SETUP.md).
+it. Without Microsoft credentials the Microsoft button renders but reports an error
+when clicked. Service-by-service setup lives in [SETUP.md](./SETUP.md).
 
 ## Project structure
 
@@ -64,7 +64,7 @@ names Better Auth expects.
 | --- | --- | --- |
 | `user` | One row per person | `id` (pk), `email` (unique), `name`, `email_verified`, `image` |
 | `session` | Server-side sessions behind the cookie | `token` (unique), `user_id` → user, `expires_at`, `ip_address`, `user_agent` |
-| `account` | Links a user to a provider (`google`, or `credential`) | `provider_id`, `account_id`, `user_id` → user, OAuth token columns |
+| `account` | Links a user to a provider (`microsoft`, or `credential`) | `provider_id`, `account_id`, `user_id` → user, OAuth token columns |
 | `verification` | Single-use magic-link tokens and other short-lived proofs | `identifier`, `value`, `expires_at` |
 | `jwks` | RS256 signing key pairs for the JWT plugin | `public_key`, `private_key` (encrypted at rest), `expires_at` |
 
@@ -87,17 +87,19 @@ A runnable Node reference lives in
 [`reference/aliyun-jwt-verify/`](./reference/aliyun-jwt-verify/verify.mjs) — including
 expired-token handling. CORS and header details: [SETUP.md §6](./SETUP.md).
 
-## Adding Apple sign-in later
+## Adding another provider later (Apple, Google, …)
 
 Two edits, by design:
 
-1. **Server** — in `src/lib/auth.ts`, add an `apple` entry next to `google` in
-   `socialProviders` (env vars `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`), plus
-   Apple's required `appleid.apple.com` in `trustedOrigins` per Better Auth docs.
+1. **Server** — in `src/lib/auth.ts`, add the provider's entry next to
+   `microsoft` in `socialProviders` (with its env vars; for Apple also add
+   `appleid.apple.com` to `trustedOrigins` per Better Auth docs).
 2. **UI** — in `src/components/auth/ProviderButtons.tsx`, append one entry to the
-   `PROVIDERS` array (label, icon, `authClient.signIn.social({ provider: "apple" })`).
+   `PROVIDERS` array (label, icon, `authClient.signIn.social({ provider: "…" })`).
 
 The button row, pending/error states, and layout already accommodate it.
+Google was the launch provider until 2026-07-17 and can return the same way —
+its setup steps are preserved at the end of SETUP.md §1.
 
 ## DECISIONS
 
@@ -140,6 +142,14 @@ solely because Google's sign-in branding guidelines specify it for the button la
 verification all key off the domain; doing that work twice (once for a staging domain,
 once for regmaglypt.com) buys nothing before launch. SETUP.md §1–2 mark exactly which
 values change when the custom domain lands.
+
+**Microsoft as the launch OAuth provider.** Switched from Google on product
+direction (2026-07-17). Better Auth's `microsoft` provider with tenant `common`
+accepts both personal and work/school Microsoft accounts; the button follows
+Microsoft's dark-theme branding spec (#2F2F2F fill, Segoe UI label, four-colour
+mark — Segoe UI is a system font, so dropping Google also dropped the Roboto
+download). The provider row and server config keep the one-entry-per-provider
+shape, so Google can return alongside it at any time.
 
 **Dev email transport.** When `RESEND_API_KEY` is unset the magic-link URL is printed
 to the server console. This keeps local development and E2E tests free of real email

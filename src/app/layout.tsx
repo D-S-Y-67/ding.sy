@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Sans, Marcellus, Roboto } from "next/font/google";
+import { Instrument_Sans, Marcellus } from "next/font/google";
 import "./globals.css";
 
 const sans = Instrument_Sans({
@@ -12,14 +12,6 @@ const sans = Instrument_Sans({
 const display = Marcellus({
   weight: "400",
   variable: "--font-display-src",
-  subsets: ["latin"],
-});
-
-// Loaded solely for the Google sign-in button, whose branding guidelines
-// specify Roboto Medium.
-const roboto = Roboto({
-  weight: "500",
-  variable: "--font-roboto-src",
   subsets: ["latin"],
 });
 
@@ -42,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${display.variable} ${roboto.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>

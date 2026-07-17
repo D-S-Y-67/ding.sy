@@ -24,13 +24,13 @@ export async function sendMagicLink(email: string): Promise<void> {
   }
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithMicrosoft(): Promise<void> {
   const { error } = await authClient.signIn.social({
-    provider: "google",
+    provider: "microsoft",
     callbackURL: "/home",
     errorCallbackURL: "/",
   });
   if (error) {
-    throw new Error(error.message ?? "Google sign-in failed to start");
+    throw new Error(error.message ?? "Microsoft sign-in failed to start");
   }
 }

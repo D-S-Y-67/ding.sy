@@ -57,7 +57,8 @@
 
   --font-sans: var(--font-sans-src), system-ui, sans-serif;
   --font-display: var(--font-display-src), Georgia, serif;
-  --font-google: var(--font-roboto-src), Roboto, Arial, sans-serif;
+  /* Microsoft's button spec asks for Segoe UI — a system font, no download. */
+  --font-provider: "Segoe UI", var(--font-sans-src), system-ui, sans-serif;
 
   /* Deliberate, small type scale (1.2 ratio, nudged to whole pixels). */
   --text-xs: 0.75rem;

@@ -3,7 +3,7 @@
 Everything needed to run Regmaglypt's login system, written to be followed without
 prior knowledge of the services. Sections:
 
-1. [Google Cloud Console (OAuth)](#1-google-cloud-console-oauth)
+1. [Microsoft Entra ID (OAuth)](#1-microsoft-entra-id-oauth)
 2. [Resend (magic-link email)](#2-resend-magic-link-email)
 3. [Environment variables](#3-environment-variables)
 4. [Database (Supabase Postgres)](#4-database-supabase-postgres)
@@ -12,40 +12,39 @@ prior knowledge of the services. Sections:
 
 ---
 
-## 1. Google Cloud Console (OAuth)
+## 1. Microsoft Entra ID (OAuth)
 
-1. **Create a project.** Go to <https://console.cloud.google.com/>, open the project
-   picker (top bar) → **New project** → name it `regmaglypt` → **Create**, and make
-   sure it's the selected project.
-2. **Configure the consent screen.** **APIs & Services → OAuth consent screen**
-   (Google Auth Platform → Branding on newer consoles):
-   - User type: **External**, then **Create**.
-   - App name `Regmaglypt`, support email: your email.
-   - App domain (production only): `https://<your-app>.vercel.app` — update to
-     `https://regmaglypt.com` at launch.
-   - Scopes: the defaults are enough (`openid`, `email`, `profile`) — no sensitive
-     scopes, so no Google review is needed.
-   - While the app is in **Testing** publishing status only listed test users can
-     sign in — add your own address under **Test users**, or press **Publish app**
-     to allow anyone.
-3. **Create the OAuth client.** **APIs & Services → Credentials → Create
-   credentials → OAuth client ID**:
-   - Application type: **Web application**, name `regmaglypt-web`.
-   - **Authorized JavaScript origins** — add both:
-     - `http://localhost:3000`
-     - `https://<your-app>.vercel.app`
-   - **Authorized redirect URIs** — add both:
-     - `http://localhost:3000/api/auth/callback/google`
-     - `https://<your-app>.vercel.app/api/auth/callback/google`
-   - **Create**, then copy the **Client ID** → `GOOGLE_CLIENT_ID` and
-     **Client secret** → `GOOGLE_CLIENT_SECRET`.
-4. **At custom-domain launch:** add `https://regmaglypt.com` as an origin and
-   `https://regmaglypt.com/api/auth/callback/google` as a redirect URI (keep the
-   Vercel ones for previews if you like), and update the consent-screen domain.
+1. **Register the app.** Go to <https://portal.azure.com> → search **Microsoft
+   Entra ID** → **App registrations** → **New registration**:
+   - Name: `Regmaglypt`.
+   - Supported account types: **Accounts in any organizational directory and
+     personal Microsoft accounts** — this is what lets ordinary consumers with
+     personal Microsoft accounts sign in.
+   - Redirect URI: platform **Web**, value
+     `http://localhost:3000/api/auth/callback/microsoft` → **Register**.
+2. **Add the production redirect.** In the registration: **Authentication →
+   Add URI** → `https://regmaglypt.vercel.app/api/auth/callback/microsoft` → Save.
+3. **Copy the client ID.** On the **Overview** page, copy **Application (client)
+   ID** → `MICROSOFT_CLIENT_ID`.
+4. **Create the secret.** **Certificates & secrets → Client secrets → New client
+   secret** → pick a lifetime → **Add**, then copy the **Value** column
+   immediately (it is shown once; the *Secret ID* column is not the secret) →
+   `MICROSOFT_CLIENT_SECRET`. Note the expiry — you must rotate it before then.
+5. **Tenant.** Leave `MICROSOFT_TENANT_ID` unset for the default `common`
+   (personal + work/school accounts). To restrict sign-in to one organisation,
+   set it to that directory's tenant ID from the Overview page.
+6. **At custom-domain launch:** add
+   `https://regmaglypt.com/api/auth/callback/microsoft` under Authentication.
 
-Common failure: `redirect_uri_mismatch` on sign-in means the exact
-`<BETTER_AUTH_URL>/api/auth/callback/google` is not in the redirect list —
+Common failure: `AADSTS50011` on sign-in means the exact
+`<BETTER_AUTH_URL>/api/auth/callback/microsoft` is not in the redirect list —
 scheme, host, and path must match character for character.
+
+**Re-adding Google later** (deliberately kept cheap): create OAuth credentials at
+<https://console.cloud.google.com> with redirect URI
+`<BETTER_AUTH_URL>/api/auth/callback/google`, set `GOOGLE_CLIENT_ID`/`SECRET`,
+add a `google` entry in `src/lib/auth.ts` and one button entry in
+`src/components/auth/ProviderButtons.tsx`.
 
 ## 2. Resend (magic-link email)
 
@@ -78,7 +77,8 @@ Local: copy `.env.local.example` to `.env.local` and fill in. Every variable:
 | `BETTER_AUTH_URL` | yes | Absolute base URL of the app (`http://localhost:3000` locally, the Vercel URL in production). Also the JWT `iss`. |
 | `BETTER_AUTH_SECRET` | yes | Secret for session-token hashing and private-key encryption at rest. Generate: `openssl rand -base64 32`. Rotating it invalidates sessions. |
 | `DATABASE_URL` | yes | Postgres connection string — see §4 for which one. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | prod yes, dev optional | From §1. Absent in dev, the Google button shows an inline error when clicked. |
+| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | prod yes, dev optional | From §1. Absent in dev, the Microsoft button shows an inline error when clicked. |
+| `MICROSOFT_TENANT_ID` | no | Default `common` (personal + work accounts); set a tenant ID to restrict to one organisation. |
 | `RESEND_API_KEY` | prod yes, dev optional | From §2. Absent in dev, magic links print to the console. |
 | `EMAIL_FROM` | prod yes | Verified sender, `Regmaglypt <signin@mail.regmaglypt.com>`. Falls back to `onboarding@resend.dev`. |
 
@@ -130,17 +130,17 @@ DATABASE_URL="<session-pooler-url>" npx drizzle-kit migrate
    every other branch/PR gets a Preview deployment.
 4. **Preview deployments and OAuth — what breaks and why.** Preview URLs are
    unique per deployment (`<app>-git-<branch>-<team>.vercel.app`), and:
-   - Google only redirects to URIs registered in §1 — unregistered preview URLs
-     make Google sign-in fail with `redirect_uri_mismatch`. Registering every
-     preview URL is impractical; don't try.
+   - Microsoft only redirects to URIs registered in §1 — unregistered preview
+     URLs make sign-in fail with `AADSTS50011`. Registering every preview URL
+     is impractical; don't try.
    - Better Auth only trusts its own `BETTER_AUTH_URL` origin — callbacks on other
      hosts are rejected as untrusted.
 
    **Policy that works:** test OAuth and magic links on Production (or locally);
    treat previews as UI review builds. If auth-on-previews becomes necessary
    later, pin a stable preview URL (Vercel *Preview Deployment Suffix* or a
-   dedicated `staging` branch domain), register that one URL with Google, and set
-   preview-scoped `BETTER_AUTH_URL` to it.
+   dedicated `staging` branch domain), register that one URL as a redirect, and
+   set preview-scoped `BETTER_AUTH_URL` to it.
 5. **Custom domain at launch:** Project → **Settings → Domains** → add
    `regmaglypt.com`, follow the DNS instructions, then update
    `BETTER_AUTH_URL` (Production), Google origins/redirects (§1.4), and the
