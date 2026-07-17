@@ -4,9 +4,9 @@ import { jwt, magicLink } from "better-auth/plugins";
 import { db } from "./db";
 import * as schema from "./db/schema";
 import { sendMagicLinkEmail } from "./email/send-magic-link";
-import { optionalEnv, requireEnv } from "./env";
+import { optionalEnv, requireEnvAtRuntime, resolveBaseUrl } from "./env";
 
-const baseURL = requireEnv("BETTER_AUTH_URL");
+const baseURL = resolveBaseUrl();
 
 const googleClientId = optionalEnv("GOOGLE_CLIENT_ID");
 const googleClientSecret = optionalEnv("GOOGLE_CLIENT_SECRET");
@@ -21,7 +21,7 @@ const googleClientSecret = optionalEnv("GOOGLE_CLIENT_SECRET");
 export const auth = betterAuth({
   appName: "Regmaglypt",
   baseURL,
-  secret: requireEnv("BETTER_AUTH_SECRET"),
+  secret: requireEnvAtRuntime("BETTER_AUTH_SECRET", "build-placeholder-secret"),
   database: drizzleAdapter(db, { provider: "pg", schema }),
 
   socialProviders:
