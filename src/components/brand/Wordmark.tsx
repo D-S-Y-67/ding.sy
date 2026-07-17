@@ -7,7 +7,7 @@ import { GlyphMark } from "./GlyphMark";
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-3 ${className}`}>
-      <GlyphMark size={26} className="text-accent" />
+      <GlyphMark size={26} className="text-foreground/80" />
       <span className="font-display text-2xl tracking-[0.04em] text-foreground">
         Regmaglypt
       </span>

@@ -4,14 +4,15 @@
  */
 
 export const SPACE_COLORS = {
-  /** Base sky, top to bottom. */
-  skyTop: "#04050c",
-  skyBottom: "#090a18",
-  /** Large soft nebula glows, pre-rendered once per resize. */
+  /** Base sky, top to bottom — true black fading to a breath of blue. */
+  skyTop: "#000000",
+  skyBottom: "#04050b",
+  /** Large soft nebula glows, pre-rendered once per resize. Kept faint so
+   * the sky reads black first, colour second. */
   nebulae: [
-    { color: "rgba(43, 52, 110, 0.16)", cx: 0.22, cy: 0.24, r: 0.62 },
-    { color: "rgba(84, 51, 128, 0.13)", cx: 0.78, cy: 0.62, r: 0.7 },
-    { color: "rgba(32, 78, 108, 0.1)", cx: 0.55, cy: 0.95, r: 0.55 },
+    { color: "rgba(43, 52, 110, 0.1)", cx: 0.22, cy: 0.24, r: 0.62 },
+    { color: "rgba(84, 51, 128, 0.08)", cx: 0.78, cy: 0.62, r: 0.7 },
+    { color: "rgba(32, 78, 108, 0.06)", cx: 0.55, cy: 0.95, r: 0.55 },
   ],
   /** Star tints — mostly white, a few cool and warm outliers. */
   starTints: ["#ffffff", "#cfdcff", "#ffe8cf"] as const,

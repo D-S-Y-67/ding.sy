@@ -137,7 +137,7 @@ export function MagicLinkForm() {
       <button
         type="submit"
         disabled={sending}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#e4e7ff] text-base font-medium text-[#0d0e1c] transition-[transform,background-color,box-shadow] duration-(--duration-press) ease-out-quint hover:bg-white hover:shadow-[0_0_28px_rgba(167,171,255,0.3)] focus-visible:ring-4 focus-visible:ring-accent/40 focus-visible:outline-none active:scale-[0.97] disabled:cursor-default disabled:opacity-70 disabled:hover:bg-[#e4e7ff] disabled:hover:shadow-none disabled:active:scale-100"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white text-base font-medium text-[#05060c] transition-[transform,box-shadow] duration-(--duration-press) ease-out-quint hover:shadow-[0_0_32px_rgba(220,224,255,0.28)] focus-visible:ring-4 focus-visible:ring-accent/40 focus-visible:outline-none active:scale-[0.97] disabled:cursor-default disabled:opacity-70 disabled:hover:shadow-none disabled:active:scale-100"
       >
         {sending ? (
           <>

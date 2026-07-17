@@ -45,9 +45,9 @@ export function LoginCard({ errorMessage }: { errorMessage?: string | null }) {
         style={riseDelay(150)}
         aria-hidden="true"
       >
-        <span className="h-px flex-1 bg-white/10" />
+        <span className="h-px flex-1 bg-white/8" />
         <span className="text-xs tracking-[0.2em] text-faint uppercase">or</span>
-        <span className="h-px flex-1 bg-white/10" />
+        <span className="h-px flex-1 bg-white/8" />
       </div>
 
       <div className="animate-rise" style={riseDelay(200)}>

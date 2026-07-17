@@ -20,14 +20,14 @@ import {
  */
 
 const palette = {
-  sky: "#04050c",
-  card: "#10121f",
-  border: "#262a44",
-  text: "#e6e9f5",
+  sky: "#000000",
+  card: "#0b0c14",
+  border: "#20222f",
+  text: "#eef0f8",
   muted: "#9ba0b8",
   accent: "#a7abff",
-  buttonBg: "#e4e7ff",
-  buttonText: "#0d0e1c",
+  buttonBg: "#ffffff",
+  buttonText: "#05060c",
 };
 
 export function MagicLinkEmail({ url }: { url: string }) {
