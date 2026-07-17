@@ -1,4 +1,5 @@
 import { DRIFT_ANGLE, SPACE_COLORS, STAR_LAYERS, TWINKLE } from "./config";
+import type { PlanetDisc } from "./planets";
 import { createStarSprite } from "./sprites";
 import { pick, rand, type Viewport } from "./utils";
 
@@ -20,6 +21,16 @@ interface Layer {
   offsetY: number;
   driftX: number;
   driftY: number;
+}
+
+function occludedBy(discs: PlanetDisc[], x: number, y: number): boolean {
+  for (const disc of discs) {
+    const dx = x - disc.x;
+    const dy = y - disc.y;
+    const reach = disc.radius * 1.02;
+    if (dx * dx + dy * dy < reach * reach) return true;
+  }
+  return false;
 }
 
 /**
@@ -68,7 +79,7 @@ export class Starfield {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D, viewport: Viewport): void {
+  draw(ctx: CanvasRenderingContext2D, viewport: Viewport, occluders: PlanetDisc[] = []): void {
     const { width, height } = viewport;
     const t = this.elapsed;
     for (const layer of this.layers) {
@@ -77,6 +88,9 @@ export class Starfield {
         // result positive when drift is negative.
         const x = (((star.nx * width + layer.offsetX) % width) + width) % width;
         const y = (((star.ny * height + layer.offsetY) % height) + height) % height;
+        // Stars are behind planets: skip any star drifting across a disc
+        // instead of paying a per-frame compositing layer for occlusion.
+        if (occludedBy(occluders, x, y)) continue;
         const twinkle = 1 - TWINKLE.depth * (0.5 + 0.5 * Math.sin(star.twinklePhase + t * star.twinkleSpeed));
         ctx.globalAlpha = star.baseAlpha * twinkle;
         const size = star.radius * 6; // sprite has a soft falloff; scale up so the core reads at `radius`

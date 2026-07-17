@@ -1,5 +1,6 @@
 import { ENGINE } from "./config";
 import { Nebula } from "./nebula";
+import { Planets, type PlanetPlacement } from "./planets";
 import { ShootingStars } from "./shooting-stars";
 import { Spaceship } from "./spaceship";
 import { Starfield } from "./starfield";
@@ -19,6 +20,7 @@ export class SpaceEngine {
   private dpr = 1;
 
   private nebula = new Nebula();
+  private planets = new Planets();
   private starfield = new Starfield();
   private shootingStars = new ShootingStars();
   private spaceship = new Spaceship();
@@ -27,6 +29,11 @@ export class SpaceEngine {
   private lastTime: number | null = null;
   private running = false;
   private reducedMotion = false;
+
+  /** Nebula + planets, cached; only the small dirty rectangle around a
+   * planet that moved a whole pixel is ever repainted. */
+  private backdrop: HTMLCanvasElement | null = null;
+  private prevPlacements: PlanetPlacement[] | null = null;
 
   private motionQuery: MediaQueryList | null = null;
 
@@ -89,6 +96,13 @@ export class SpaceEngine {
     this.canvas.style.height = `${height}px`;
 
     this.nebula.resize(this.viewport, this.dpr);
+    this.planets.resize(this.viewport, this.dpr);
+
+    const backdrop = document.createElement("canvas");
+    backdrop.width = this.canvas.width;
+    backdrop.height = this.canvas.height;
+    this.backdrop = backdrop;
+    this.prevPlacements = null;
 
     const areaRatio = (width * height) / ENGINE.referenceArea;
     const densityScale = Math.min(
@@ -136,17 +150,55 @@ export class SpaceEngine {
     const motion = !this.reducedMotion;
 
     this.starfield.update(dt, this.viewport, motion);
+    this.planets.update(dt, motion);
     if (motion) {
       this.shootingStars.update(dt, this.viewport);
       this.spaceship.update(dt, this.viewport);
     }
 
+    this.refreshBackdrop();
+
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    this.nebula.draw(ctx, this.viewport);
-    this.starfield.draw(ctx, this.viewport);
+    if (this.backdrop) {
+      ctx.drawImage(this.backdrop, 0, 0, this.viewport.width, this.viewport.height);
+    }
+    // Stars render over the backdrop but skip planet discs, so planets read
+    // as nearer than the field; meteors and ships stay in the foreground.
+    this.starfield.draw(ctx, this.viewport, this.planets.discs());
     if (motion) {
       this.shootingStars.draw(ctx);
       this.spaceship.draw(ctx);
     }
+  }
+
+  private refreshBackdrop(): void {
+    if (!this.backdrop) return;
+    const ctx = this.backdrop.getContext("2d");
+    if (!ctx) return;
+    const placements = this.planets.placements();
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
+    if (!this.prevPlacements || this.prevPlacements.length !== placements.length) {
+      // First paint (or resize): draw everything once.
+      this.nebula.draw(ctx, this.viewport);
+      this.planets.drawInto(ctx);
+    } else {
+      for (let i = 0; i < placements.length; i++) {
+        const prev = this.prevPlacements[i] as PlanetPlacement;
+        const next = placements[i] as PlanetPlacement;
+        if (prev.x === next.x && prev.y === next.y) continue;
+        // Repair the union of old and new sprite bounds, then restamp.
+        const pad = 2;
+        const x = Math.min(prev.x, next.x) - next.size / 2 - pad;
+        const y = Math.min(prev.y, next.y) - next.size / 2 - pad;
+        const w = Math.abs(next.x - prev.x) + next.size + pad * 2;
+        const h = Math.abs(next.y - prev.y) + next.size + pad * 2;
+        this.nebula.drawRegion(ctx, x, y, w, h);
+        ctx.globalAlpha = next.alpha;
+        ctx.drawImage(next.sprite, next.x - next.size / 2, next.y - next.size / 2, next.size, next.size);
+        ctx.globalAlpha = 1;
+      }
+    }
+    this.prevPlacements = placements;
   }
 }

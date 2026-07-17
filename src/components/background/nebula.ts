@@ -8,8 +8,10 @@ import type { Viewport } from "./utils";
  */
 export class Nebula {
   private layer: HTMLCanvasElement | null = null;
+  private dpr = 1;
 
   resize(viewport: Viewport, dpr: number): void {
+    this.dpr = dpr;
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(viewport.width * dpr));
     canvas.height = Math.max(1, Math.round(viewport.height * dpr));
@@ -41,5 +43,11 @@ export class Nebula {
   draw(ctx: CanvasRenderingContext2D, viewport: Viewport): void {
     if (!this.layer) return;
     ctx.drawImage(this.layer, 0, 0, viewport.width, viewport.height);
+  }
+
+  /** Restores just one region of sky — used for dirty-rect backdrop repair. */
+  drawRegion(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    if (!this.layer || w <= 0 || h <= 0) return;
+    ctx.drawImage(this.layer, x * this.dpr, y * this.dpr, w * this.dpr, h * this.dpr, x, y, w, h);
   }
 }

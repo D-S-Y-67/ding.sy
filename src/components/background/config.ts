@@ -18,6 +18,78 @@ export const SPACE_COLORS = {
   starTints: ["#ffffff", "#cfdcff", "#ffe8cf"] as const,
 } as const;
 
+/** Shared light direction for planet shading — matches the brightest nebula
+ * corner so the whole scene reads as lit from one place. */
+export const LIGHT_DIR = { x: -0.5, y: -0.62 } as const;
+
+/**
+ * Planets, painted back-to-front. Positions/radii are viewport fractions
+ * (radius against the smaller dimension); each is pre-rendered once per
+ * resize and only blitted per frame. Motion is a slow Lissajous bob so
+ * compositions never drift apart.
+ */
+export const PLANETS = [
+  {
+    id: "halcyon",
+    cx: 0.13,
+    cy: 0.82,
+    radius: 0.21,
+    alpha: 0.9,
+    // The giant stays put: at this scale motion reads as a glitch, and a
+    // static sprite lets the backdrop cache repaint only the small worlds.
+    bob: { amp: 0, period: 110 },
+    palette: {
+      lit: "#93a7c8",
+      mid: "#46567a",
+      shadow: "#0d1322",
+      atmosphere: "rgba(150, 174, 224, 0.5)",
+    },
+    bands: [
+      { y: -0.55, h: 0.16, color: "rgba(214, 197, 171, 0.17)" },
+      { y: -0.28, h: 0.09, color: "rgba(255, 255, 255, 0.08)" },
+      { y: -0.04, h: 0.18, color: "rgba(196, 175, 148, 0.19)" },
+      { y: 0.22, h: 0.11, color: "rgba(255, 255, 255, 0.07)" },
+      { y: 0.46, h: 0.2, color: "rgba(158, 172, 204, 0.15)" },
+    ],
+    ring: { tilt: -0.31, inner: 1.38, outer: 2.1, flatten: 0.26, rgb: [196, 205, 228] as const },
+  },
+  {
+    id: "ember",
+    cx: 0.87,
+    cy: 0.16,
+    radius: 0.052,
+    alpha: 0.85,
+    bob: { amp: 5, period: 80 },
+    palette: {
+      lit: "#d9a48e",
+      mid: "#8a584c",
+      shadow: "#200f12",
+      atmosphere: "rgba(222, 168, 140, 0.35)",
+    },
+    bands: [
+      { y: -0.2, h: 0.3, color: "rgba(240, 205, 180, 0.12)" },
+      { y: 0.35, h: 0.25, color: "rgba(120, 70, 60, 0.16)" },
+    ],
+    ring: null,
+  },
+  {
+    id: "veil",
+    cx: 0.07,
+    cy: 0.26,
+    radius: 0.03,
+    alpha: 0.75,
+    bob: { amp: 4, period: 65 },
+    palette: {
+      lit: "#a4c6cb",
+      mid: "#547680",
+      shadow: "#0e1a20",
+      atmosphere: "rgba(160, 205, 210, 0.3)",
+    },
+    bands: [],
+    ring: null,
+  },
+] as const;
+
 /** Parallax layers, back to front. Counts are for a ~1440×900 viewport and
  * are scaled down by area (see engine) with a hard floor for small screens. */
 export const STAR_LAYERS = [
